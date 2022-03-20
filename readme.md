@@ -6,6 +6,8 @@
 * [Setup](#setup)
 
 ## General info
+This app is based on FilipMam TypeScript Course!
+
 I have just started learning TypeScript.
 As always, I use online resources, so I used the beginner's course in this case. 
 With it, I created a todo application. Extensive notes are included in the 'Notes.txt' file.
