@@ -1,0 +1,303 @@
+/*
+Example 5 -----------------------------------------------
+1. Typ: array
+2. Typ: object
+3. Interface
+4. Optional properties 
+5. Iteral type + union type
+6. Type alias
+7. Moduły
+ - interfejsy i typy najlepiej przenieść do osobnych modułów
+ - importy / exporty normalnie, podobnie jak w React
+ - trzeba pamiętać przy imporcie w pliku z TS, aby używać rozszerzenia JS zamiast ts,
+    gdyż JS nie rozpoznaje takiego rozszerzenia
+ - oczywiście przy eksportach należy pamiętać o imporcie parametrów w funkcjach
+8. Typ: funkcja
+ - w przypadku typu prostego jak string, nie przekazuje referencji!
+    (w odróżnieniu do obiektu) - nadpisanie za pomocą funkcji updateSelectedCategory();
+ - inputChangeCallback
+9. Typ: any
+ - używanie typu any generalnie nie ma sensu poza wyjątkami typu consolog....
+10. Typ: unknow
+ - działa podobnie do any jeśli chodzi o przypisywanie wartości
+    w odróżnieniu do any unknown nie można używać w każdym wypadku
+    (nakłada restrykcje jeśli chodzi i wartości pochodzące z backendu)
+ - type narrowing : funkcja zadziała jeśli pobierając wartość jest ona prawdziwa
+    (sposób na ograniczanie nieznanych wartości - sprawdzenie czy coś jest stringiem)
+    Przykład:
+        logFixed(2.1);
+        let value = get(2.3);
+        if(typeof value === "number") {
+            logFixed(value)
+        }
+ - Konkluzja: unikać typów any, a jeśli już trzeba operować na nieznanych
+    zmiennych to z WYKORZYSTANIEM TYPU UNKNOW!
+11. TYP NEVER
+ -   za pomocą typu never, przypisywanym do jakiejś stałej
+12. Enums
+ - pdoobny do Interface, Type
+ - posiada wartości dużymi literami 
+ - nazwa camelcasem
+
+        enum Category {
+            GENERAL = "general",
+            WORK = "work",
+            GYM = "gym",
+            HOBBY = "hobby",
+            SOCIAL = "social",
+        }
+ - exportujemy go i importujemy następnie używamy zdefiniowanych w
+    enumie kategotii zamiast samych nazw kategorii (w kodzie niniejszej apki)
+ - raczej w większych projektach z wieloma modułami
+13. Tuples
+        const task: TaskAsTuple = ["zrobić klatkę", Category.GYM, false];
+        const newTask: TaskAsTuple = [false, "nazwa", Category.HOBBY]; - BŁĄD
+            - bo nie spełnione typy oznaczone w typie Tulpa
+        const taskName = task[0];
+        const taskCategory = task[1];
+        const taskDoneStatus = task[2];
+        addTask({name: taskName, category: taskCategory, done: taskDoneStatus});
+14. Interface vs type alias
+        type TaskType = {
+            name: string;
+            done: boolean;
+            category?: Category;
+        }
+
+        interface: TaskInterface {
+            name: string;
+            done: boolean;
+            category?: Category;
+        }
+
+        let newTask: --TaskType / TaskInterface--
+ - różnica: generalnie subtelene ale jeśli zdecydujemy się na jeden to tego się trzyammy!
+    w przypadku aliasu można z nim zastosować union typing, a w przypadku Interface NIE!
+        type Category = "work" | "hobby" | "general";
+    można łączać typy w przypadku typów
+        type CategoryAndNumber = Category | number;
+    INTERFACE =>
+    można stworzyć dużo intefaców o jednakowej nazwie [można rozszerzać]
+15. KLASY
+ - nie są specyficzne dla TS :D
+ - można wykorzystać do wszystkiego (reprezentowanie modelu danych, komponentów, całych aplikacji)
+ - example in './src/classes/task'
+
+*/
+const taskNameInputElement: HTMLInputElement = document.querySelector("#name");
+const addButtonElement: HTMLButtonElement = document.querySelector("button");
+const tasksContainerElement: HTMLElement = document.querySelector(".tasks");
+const categoriesContainerElement: HTMLElement =
+    document.querySelector(".categories");
+
+let selectedCategory: Category;
+
+type Category = "general" | "work" | "gym" | "hobby";
+// "category" type
+
+interface Task {
+    title: string,
+    done: boolean,
+    category?: Category; //optional property
+}
+
+const categories: Category[] = ["general", "work", "gym", "hobby"]
+
+
+// dekalracja interfejsu - można go reużywać
+// podobny efekt uzyskać można korzystając z Typów! które sam zdefiniuję
+// watch syntax differences!
+
+/*const tasks: {
+    title: string;
+    done: boolean;
+// w TS obiekty oddzielamy średnikiem NIE PRZECINKIEM!
+*/
+const tasks: Task[] = [
+    {
+        title: "Wyrzucić śmieci",
+        done: false,
+    }, {
+        title: "Pójść na siłownię",
+        done: false,
+        category: "gym",
+    }, {
+
+        title: "Nakarmić psa",
+        done: false,
+    },
+];
+// "const tasks: string[]" można także zapisać jako "Array<string>"
+// w dalszej części, chcąc utworzyć checkboxy, należy zmienić tablice ze stringa na
+// obiekt, w tym celu należy do taska dodać properties
+
+const render = () => {
+    tasksContainerElement.innerHTML = "";
+    tasks.forEach((task, index) => {
+        const taskElement: HTMLElement = document.createElement("li");
+        if (task.category) {
+            taskElement.classList.add(task.category);
+        };
+        
+/*        taskElement.innerText = task.title;
+// TS widzi, że iteruje po tablicy stringów, więc nie muszę deklarować typów dla 'task'.
+        tasksContainerElement.appendChild(taskElement);
+*/
+        const id: string = `task-${index}`;
+
+        const labelElement: HTMLLabelElement = document.createElement("label");
+        labelElement.innerText = task.title;
+        labelElement.setAttribute("for", id);
+
+        const checkboxElement: HTMLInputElement =
+            document.createElement("input");
+        checkboxElement.type = "checkbox";
+        checkboxElement.title = task.title;
+        checkboxElement.id = id;
+        checkboxElement.checked = task.done;
+        checkboxElement.addEventListener("change", () => {
+            task.done = !task.done;
+        });
+// Jako, że w JS obiekty są przekazywane przez referencję to task cały czas wskazuje na oniekt
+// w tablicy tasks zdefiniowanej wyżej
+        taskElement.appendChild(labelElement);
+        taskElement.appendChild(checkboxElement);
+
+        tasksContainerElement.appendChild(taskElement);
+    });
+};
+
+const renderCategories = () => {
+    categories.forEach((category) => {
+        const categoryElement: HTMLElement = document.createElement("li");
+
+        const radioInputElement: HTMLInputElement =
+            document.createElement("input");
+        radioInputElement.type = "radio";
+        radioInputElement.title = "category";
+        radioInputElement.value = category;
+        radioInputElement.id = `category-${category}`;
+        radioInputElement.addEventListener("change", () => {
+            selectedCategory = category;
+        });
+
+        const labelElement: HTMLLabelElement = document.createElement("label");
+        labelElement.setAttribute("for", `category-${category}`);
+        labelElement.innerText = category;
+
+        categoryElement.appendChild(radioInputElement);
+        categoryElement.appendChild(labelElement);
+
+        categoriesContainerElement.appendChild(categoryElement);
+    });
+};
+
+
+// previously - task: {title: string, done: boolean}
+const addTask = (task: Task) => {
+    tasks.push(task);
+}
+
+addButtonElement.addEventListener("click", (event: Event) => {
+//by zapobiec wysyłania formularza (jako, że button to HTML element) w callback'u, 
+//który następuje po kliknięciu wpisuje parametr event i dodaje jego typ "Event"
+    event.preventDefault();
+    addTask({
+        title: taskNameInputElement.value,
+        done: false,
+        category: selectedCategory,
+    });
+    render();
+});
+
+addTask({ title: "zrobić klatę", category: "gym", done: false });
+renderCategories();
+render();
+
+/*
+Example 4 -----------------------------------------------
+Zmienne typu: boolean
+
+const button Element = document.querySelector("button");
+
+//Deklaruję funkcję za pomocą ternary operator
+const calculatePrice = (originalPrice: number, hasDiscount: boolean) => {
+    return hasDiscount ? originalPrice * 0.8 : originalprice;
+};
+
+buttonElement.addEventListener("click", () => {
+    const originalPrice: number = 50;
+    const hasDiscount: boolean =
+        new URLSearchParams(window.location.search).get("discount") === "true";
+    console.log(calculatePrice(originalPrice, hasDiscount));
+});
+*/
+
+/*
+Example 3 -----------------------------------------------
+Union Types
+
+const logAge = (age: number | string) => {
+    console.log(`Hej mam ${age} lat!`);
+};
+
+logAge(28);
+logAge("dwadzieścia trzy");
+
+
+Takie zadeklarowanie kilku możliwych wartości typów 
+dla danej zmiennej nazywamy union tpye
+
+let test: string | number | boolean;
+
+test = "test";
+test = 21;
+test = true;
+test = []; - już nie można
+
+*/
+
+/*
+Example 2 -----------------------------------------------
+
+1. Type inference
+nie trzeba za każdym razem określać typu wartości
+- let age: number = 2;
+można zapisać po prostu
+- let age = 2;
+wówczas TS zrozumie, że age jest typem number
+
+NATOMIAST! w funkcjo zawsze trzeba określać parametry i typy!
+- let age: number;
+age = 23;
+const add = (v1: number, v2: number) => v1 + v2;
+
+
+2. Iteral type
+W momencie, gdy deklarujemy stałą i przypisujemy do niej wartość to
+podczas korzystania ze stałej, TS zawęża możliwość wykorzystania stałej
+(jej wartość się nie zmieni)
+
+- const age: 20;
+age ("const age: 29")
+*/
+
+/*
+Example 1 -----------------------------------------------
+
+const input1Element: HTMLInputElement = 
+document.querySelector("#input1");
+
+const input2Element: HTMLInputElement = 
+document.querySelector("#input2");
+
+const add = (v1: number, v2: number) => v1 + v2;
+
+document.querySelector("button").addEventListener(
+    "click", () => {
+    const sum = add(
+        Number(input1Element.value), 
+        Number(input2Element.value));
+    console.log(sum);
+});
+*/
